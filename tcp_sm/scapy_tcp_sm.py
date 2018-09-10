@@ -25,8 +25,8 @@ description: broken code
 
 from scapy.all import *
 from random import randint
-from tcp_snd import snd
-from tcp_rcv import rcv
+from .tcp_snd import snd
+from .tcp_rcv import rcv
 
 
 

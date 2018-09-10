@@ -98,7 +98,7 @@ class Rcv:
         :return: updated ack window
         :rtype: boolean
         '''
-        rcvd_seqs = self.rcvd_segs.keys()
+        rcvd_seqs = list(self.rcvd_segs.keys())
         rcvd_seqs.sort()
         flag = False
         for i in rcvd_seqs:
@@ -182,17 +182,17 @@ class Rcv:
         UPP = (self.NXT + self.WND) % MAX
         LOW = self.NXT % MAX
         is_valid = False
-        print ("seq: %d LOW: %d UPP: %d"%(seq, LOW, UPP))
+        print(("seq: %d LOW: %d UPP: %d"%(seq, LOW, UPP)))
         if LOW <= UPP:
             is_valid = LOW <= seq + seg_sz < UPP
-            print ("LOW: %d  <= seq + seg_sz: %d  < UPP: %d == %s"%(LOW, seq+seg_sz, UPP, str(is_valid)))
+            print(("LOW: %d  <= seq + seg_sz: %d  < UPP: %d == %s"%(LOW, seq+seg_sz, UPP, str(is_valid))))
         else:
             if seq < LOW:
                 is_valid = LOW <= seq + seg_sz + MAX < UPP + MAX
-                print ("LOW: %d  <= seq + seg_sz + MAX: %d  < UPP: %d == %s"%(LOW, seq+seg_sz+MAX, UPP+MAX, str(is_valid)))
+                print(("LOW: %d  <= seq + seg_sz + MAX: %d  < UPP: %d == %s"%(LOW, seq+seg_sz+MAX, UPP+MAX, str(is_valid))))
             else:
                 is_valid = LOW <= seq + seg_sz < UPP + MAX
-                print ("LOW: %d  <= seq + seg_sz: %d  < UPP: %d == %s"%(LOW, seq+seg_sz, UPP+MAX, str(is_valid)))
+                print(("LOW: %d  <= seq + seg_sz: %d  < UPP: %d == %s"%(LOW, seq+seg_sz, UPP+MAX, str(is_valid))))
         return is_valid
     
     def __str__(self):
@@ -201,7 +201,7 @@ class Rcv:
         s += "WND: %d \n"%self.WND 
         s += "UP: %d \n"%self.UP 
         s += "IRS: %d \n"%self.IRS
-        f = self.rcvd_segs.keys()
+        f = list(self.rcvd_segs.keys())
         f.sort()
         k = lambda num: str(num)
         s += "rcvd_segs: %s \n"%",".join(map(k, f)) 

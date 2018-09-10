@@ -24,8 +24,8 @@ description: test script
 """
 
 
-from tcp_stream import *
-from tcp_state import *
+from .tcp_stream import *
+from .tcp_state import *
 
 import couchdb
 
@@ -85,7 +85,7 @@ for pkt in tcp_pkts:
 
 
 states = []
-for k in tcp_states.keys():
+for k in list(tcp_states.keys()):
     if not tcp_states[k] in states: 
         states.append(tcp_states[k])
         
@@ -111,7 +111,7 @@ for pkt in tcp_pkts:
 
 
 streams = []
-for k in tcp_streams.keys():
+for k in list(tcp_streams.keys()):
     if not tcp_streams[k] in streams: 
         streams.append(tcp_streams[k])
         
@@ -125,7 +125,7 @@ i = 0
 #ssh_stream = streams[1]
 #ssh_stream.get_app_stream_summary()
 
-print ("streams extracted: ",len(streams))
+print(("streams extracted: ",len(streams)))
 
 open_streams = []
 closed_streams = []
@@ -146,7 +146,7 @@ def print_streams_states(streams):
 	other_streams = streams
 	i = 0
 	while i < len(other_streams):
-		print (i, other_streams[i].tcp_state.get_states())
+		print((i, other_streams[i].tcp_state.get_states()))
 		i += 1
 
 
@@ -157,7 +157,7 @@ def print_step_by_step_state(stream):
 	i = 1
 	while i < len(test):
 		tcp_stream.add_pkt(test[i])
-		print tcp_stream.tcp_state.get_states()
+		print(tcp_stream.tcp_state.get_states())
 		i+=1
 
 print_streams_states(other_streams)

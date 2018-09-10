@@ -95,18 +95,18 @@ class Snd:
         :rtype: boolean
         '''
         print (self)
-        print (self.UNA + self.WND, self.UNA, (self.UNA + self.WND) % MAX)
+        print((self.UNA + self.WND, self.UNA, (self.UNA + self.WND) % MAX))
          
         UPP = (self.UNA + self.WND) % MAX
         LOW = self.UNA
         is_valid = False
         if LOW <= UPP:
             is_valid = LOW <= ack < UPP
-            print ("LOW: %d < ack: %d < UPP: %d"%(LOW, ack, UPP))    
+            print(("LOW: %d < ack: %d < UPP: %d"%(LOW, ack, UPP)))    
         else:
             if ack < LOW:
                 is_valid = LOW <= ack + MAX < UPP + MAX
-                print ("LOW: %d < ack: %d < UPP: %d"%(LOW,ack+MAX, UPP+MAX))
+                print(("LOW: %d < ack: %d < UPP: %d"%(LOW,ack+MAX, UPP+MAX)))
                 
             else:
                 is_valid = LOW <= ack < UPP + MAX
@@ -137,7 +137,7 @@ class Snd:
         :rtype: boolean
         '''
         
-        print ("Segment ack: ",self.is_acceptable_ack(seg.ack), "\n",repr(seg))
+        print(("Segment ack: ",self.is_acceptable_ack(seg.ack), "\n",repr(seg)))
         if self.is_acceptable_ack(seg.ack):
             ack_wnd = self.get_ack_wnd(seg.ack)
             self.update_una(ack_wnd)
@@ -181,7 +181,7 @@ class Snd:
             payload = str(seg.payload)
         
         wnd_sz = self.get_current_wnd_sz()
-        print ("Calculated a wnd_sz of %x" % wnd_sz)
+        print(("Calculated a wnd_sz of %x" % wnd_sz))
         if wnd_sz <= 0:
             return None, payload
         
@@ -218,7 +218,7 @@ class Snd:
         else:
             payload = str(seg.payload)
         wnd_sz = self.get_current_wnd_sz()
-        print ("Calculated a wnd_sz of %x" % wnd_sz)
+        print(("Calculated a wnd_sz of %x" % wnd_sz))
         
         data_len = self.get_payload_len(payload, wnd_sz)
         seg.seq = self.NXT

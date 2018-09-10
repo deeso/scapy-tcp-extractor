@@ -32,8 +32,8 @@ from threading import *
 from random import randint
 from scapy.all import *
 
-from tcp_stream import *
-from tcp_state import *
+from .tcp_stream import *
+from .tcp_state import *
 
 CLEANUP = True
 CLEANUP_THREAD = None
@@ -87,9 +87,9 @@ class TCPStreamExtractor:
                 self.dbinfo = None
                 
         
-    def next(self):
-		pkt = self.pcap_file.next()
-		self.timestamp = long(pkt.time)
+    def __next__(self):
+		pkt = next(self.pcap_file)
+		self.timestamp = int(pkt.time)
 		if not 'TCP' in pkt:
 		    return pkt
 		
@@ -109,7 +109,7 @@ class TCPStreamExtractor:
             CLEANUP_THREAD = threading.Timer(self.timer, thread_maintanence, args=(self.timer, self ))
             CLEANUP_THREAD.start() # Duh! me needs to start or nom nom nom memories!
             while True:
-		        self.next()
+		        next(self)
         except KeyboardInterrupt:
             self.cleanup = False
             CLEANUP_THREAD.cancel()
@@ -121,7 +121,7 @@ class TCPStreamExtractor:
             CLEANUP_THREAD.cancel()
             if CLEANUP_THREAD.is_alive():
                 CLEANUP_THREAD.join()
-            streams = self.streams.keys()
+            streams = list(self.streams.keys())
             for stream in streams:
                 self.write_stream(stream)
 
@@ -131,25 +131,25 @@ class TCPStreamExtractor:
         purged_streams = set()
         
         # dont want streams changing underneath us
-        keys = self.streams.keys()
+        keys = list(self.streams.keys())
         for key in keys:
             if not key in self.streams:
                 continue
             pkt_cnt = self.streams[key].len_pkts()
-            l_ts = long(self.streams[key].time)
+            l_ts = int(self.streams[key].time)
             if (timestamp - l_ts) > timeout:
-		print ("Timeout occurred: %s - %s => %s, Writing stream: %s"%(str(timestamp),str(l_ts), str(timestamp-l_ts), key))
+		print(("Timeout occurred: %s - %s => %s, Writing stream: %s"%(str(timestamp),str(l_ts), str(timestamp-l_ts), key)))
                 purged_streams.add(key)
 		self.write_stream(key)
                 self.remove_stream(key)
-		print ("%s purged from current streams"%key)
+		print(("%s purged from current streams"%key))
         
             elif pkt_cnt > 10000:
-                print ("Writing %d of %d packets from stream: %s"%(pkt_cnt,self.streams[key].len_pkts(), self.streams[key].get_stream_name())) 
+                print(("Writing %d of %d packets from stream: %s"%(pkt_cnt,self.streams[key].len_pkts(), self.streams[key].get_stream_name()))) 
 		self.write_stream(key, pkt_cnt)
                 self.streams[key].destroy(pkt_cnt)
-                print ("***Wrote %d packets for stream: %s"%(pkt_cnt,self.streams[key].get_stream_name())) 
-        print ("Purged %d streams of %d from evaluated streams\n\n"%(len(purged_streams), len(keys)/2)) 
+                print(("***Wrote %d packets for stream: %s"%(pkt_cnt,self.streams[key].get_stream_name()))) 
+        print(("Purged %d streams of %d from evaluated streams\n\n"%(len(purged_streams), len(keys)/2))) 
 
             
 		    

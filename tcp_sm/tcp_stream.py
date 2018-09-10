@@ -29,7 +29,7 @@ from random import randint
 import scapy
 
 from random import randint
-from tcp_state import TCPStateMachine
+from .tcp_state import TCPStateMachine
 
 
 from threading import *
@@ -58,15 +58,15 @@ class TCPStream:
         self.flow_file = None
 
     def len_pkts(self):
-        return len(self.pkts.keys())
+        return len(list(self.pkts.keys()))
     
     def destroy(self, pkts_cnt=0):
         #self.ordered_pkts = None       
-        keys = self.pkts.keys()
-        print ("destroying packets for %s"%self.get_stream_name())
+        keys = list(self.pkts.keys())
+        print(("destroying packets for %s"%self.get_stream_name()))
         if pkts_cnt > 0:
            keys = keys[:pkts_cnt]
-           print ("\t...Destroying the first %d pkts"%pkts_cnt)
+           print(("\t...Destroying the first %d pkts"%pkts_cnt))
         
         if not self.ordered_pkts is None and len(self.ordered_pkts) >= pkts_cnt:
             for i in self.ordered_pkts[:pkts_cnt]:
@@ -118,8 +118,8 @@ class TCPStream:
 
     def get_order_pkts(self, pkts_cnt=0):
         # caching mechanism
-        if self.ordered_pkts is None or len(self.ordered_pkts) != len(self.pkts.keys()):
-            times = self.pkts.keys()
+        if self.ordered_pkts is None or len(self.ordered_pkts) != len(list(self.pkts.keys())):
+            times = list(self.pkts.keys())
             times.sort()
             self.ordered_pkts = [self.pkts[time] for time in times]
         if pkts_cnt > 0:
@@ -304,7 +304,7 @@ class TCPStream:
         stream_name = self.get_stream_name()
         stream_keys = self.get_stream_keys()
         stream_summary = self.get_app_stream_summary(pkts_cnt)
-        print ("processing stream name"+stream_name)
+        print(("processing stream name"+stream_name))
         stream_fields = {}
         for summary in stream_summary:
             i = 0
@@ -318,7 +318,7 @@ class TCPStream:
             db[stream_name] = {}
             db_strname = db[stream_name]
         except:
-            print ("Streamname collision: ", stream_name)
+            print(("Streamname collision: ", stream_name))
             print (stream_name)
             raise
 
@@ -327,7 +327,7 @@ class TCPStream:
                 db_strname[timestamp] = stream_fields[timestamp]
                 db.save(db_strname )
             except:
-                print ("Time stamp collision: ", timestamp)
+                print(("Time stamp collision: ", timestamp))
                 print (stream_fields)
                 raise
         

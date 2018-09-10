@@ -24,8 +24,8 @@ Description: tracks TCPStream state between a client and server
 """
 from scapy.all import *
 from random import randint
-from tcp_snd import Snd
-from tcp_rcv import Rcv
+from .tcp_snd import Snd
+from .tcp_rcv import Rcv
 
 
 is_syn_pkt = lambda pkt: 'TCP' in pkt and pkt['TCP'].flags == TCP_FLAGS['S']
@@ -295,7 +295,7 @@ class TCPState:
         # 3-way hand shake takes place
         irs = randint(0, 0x0FFFFFFFF)
         iss = randint(0, 0x0FFFFFFFF)
-        print ("Initializing the SND with %x and RCV with %x" % (iss,irs))
+        print(("Initializing the SND with %x and RCV with %x" % (iss,irs)))
         self.SND = Snd()
         self.RCV = Rcv()
         self.seg_record = []# keep record of session  
@@ -976,11 +976,11 @@ class TCPState:
     def init_L3socket(self, iface=None, filter=None, nofilter=0):
         print ("Initializing Socket")
         self.sock = conf.L3socket(filter=filter, nofilter=nofilter,iface=iface)
-        print ("The following socket was initialized", str(socket))
+        print(("The following socket was initialized", str(socket)))
         return self.sock
     
     def init_L2socket(self, iface=None, filter=None, nofilter=0):
         print ("Initializing Socket")
         self.sock = conf.L2socket(filter=filter, nofilter=nofilter,iface=iface)
-        print ("The following socket was initialized", str(socket))
+        print(("The following socket was initialized", str(socket)))
         return self.sock
