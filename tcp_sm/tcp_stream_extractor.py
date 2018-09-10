@@ -41,21 +41,23 @@ CLEANUP_THREAD = None
 
 
 def thread_maintanence(timer_val, stream_extractor, timeout=1000):
-        new_threads = []
-        print ("Maintanence thread was called!")
-        stream_extractor.cleanup_timedout_streams(timeout)
-        if not stream_extractor.cleanup:
-            print ("Maintanence thread was called, but nothing to maintain")
-            return
-        #gc.collect()
-        CLEANUP_THREAD = threading.Timer(timer_val, thread_maintanence, args=(timer_val,stream_extractor ))
-        CLEANUP_THREAD.start()
+    new_threads = []
+    print ("Maintanence thread was called!")
+    stream_extractor.cleanup_timedout_streams(timeout)
+    if not stream_extractor.cleanup:
+        print ("Maintanence thread was called, but nothing to maintain")
+        return
+    #gc.collect()
+    CLEANUP_THREAD = threading.Timer(timer_val, thread_maintanence, args=(timer_val,stream_extractor ))
+    CLEANUP_THREAD.start()
         
         
 
 
 class TCPStreamExtractor:
-    def __init__(self, filename, outputdir=None, dbname=None,pcap_filters=None):
+    def __init__(self, filename, packet_list=None, outputdir=None, dbname=None,pcap_filters=None):
+        self.filename = filename
+        
         self.pcap_filter = pcap_filters
         self.outputdir=outputdir
         
@@ -67,7 +69,11 @@ class TCPStreamExtractor:
             if not os.path.exists(os.path.join(self.outputdir, "flows")):
                 os.mkdir(os.path.join(self.outputdir, "flows"))
         
-        self.pcap_file = scapy.utils.PcapReader(filename)
+        self.packet_list = packet_list
+        if packet_list is None:
+            self.packet_list =scapy.utils.rdpcap(filename) 
+        
+        self.pkt_num = 0
         # a stream is mapped under two flow keys
         self.streams = {}
         self.timestamp = 0
@@ -88,20 +94,21 @@ class TCPStreamExtractor:
                 
         
     def __next__(self):
-		pkt = next(self.pcap_file)
-		self.timestamp = int(pkt.time)
-		if not 'TCP' in pkt:
-		    return pkt
-		
-		flow = (create_forward_flow(pkt), create_reverse_flow(pkt))
-		if not flow[0] in self.streams and\
-			not flow[1] in self.streams and is_syn_pkt(pkt):
-			self.streams [flow[0]] = TCPStream(pkt)
-			self.streams [flow[1]] = self.streams [flow[0]] 
-		elif flow[0] in self.streams:
-			self.streams[flow[0]].add_pkt(pkt)
-		
-		return pkt
+        pkt = self.packet_list[self.pkt_num]
+        self.pkt_num += 1
+        self.timestamp = int(pkt.time)
+        if not 'TCP' in pkt:
+            return pkt
+        
+        flow = (create_forward_flow(pkt), create_reverse_flow(pkt))
+        if not flow[0] in self.streams and\
+            not flow[1] in self.streams and is_syn_pkt(pkt):
+            self.streams [flow[0]] = TCPStream(pkt)
+            self.streams [flow[1]] = self.streams [flow[0]] 
+        elif flow[0] in self.streams:
+            self.streams[flow[0]].add_pkt(pkt)
+        
+        return pkt
 
     def run(self):
         global CLEANUP_THREAD
@@ -109,7 +116,7 @@ class TCPStreamExtractor:
             CLEANUP_THREAD = threading.Timer(self.timer, thread_maintanence, args=(self.timer, self ))
             CLEANUP_THREAD.start() # Duh! me needs to start or nom nom nom memories!
             while True:
-		        next(self)
+                next(self)
         except KeyboardInterrupt:
             self.cleanup = False
             CLEANUP_THREAD.cancel()
@@ -138,21 +145,21 @@ class TCPStreamExtractor:
             pkt_cnt = self.streams[key].len_pkts()
             l_ts = int(self.streams[key].time)
             if (timestamp - l_ts) > timeout:
-		print(("Timeout occurred: %s - %s => %s, Writing stream: %s"%(str(timestamp),str(l_ts), str(timestamp-l_ts), key)))
+        print(("Timeout occurred: %s - %s => %s, Writing stream: %s"%(str(timestamp),str(l_ts), str(timestamp-l_ts), key)))
                 purged_streams.add(key)
-		self.write_stream(key)
+        self.write_stream(key)
                 self.remove_stream(key)
-		print(("%s purged from current streams"%key))
+        print(("%s purged from current streams"%key))
         
             elif pkt_cnt > 10000:
                 print(("Writing %d of %d packets from stream: %s"%(pkt_cnt,self.streams[key].len_pkts(), self.streams[key].get_stream_name()))) 
-		self.write_stream(key, pkt_cnt)
+        self.write_stream(key, pkt_cnt)
                 self.streams[key].destroy(pkt_cnt)
                 print(("***Wrote %d packets for stream: %s"%(pkt_cnt,self.streams[key].get_stream_name()))) 
         print(("Purged %d streams of %d from evaluated streams\n\n"%(len(purged_streams), len(keys)/2))) 
 
             
-		    
+            
     def remove_stream(self, key):
         # dont call in cleanup stream, it will deadlock
         if not key in self.streams:
@@ -181,12 +188,12 @@ class TCPStreamExtractor:
             odir = os.path.join(self.outputdir, "flows")
             flow_fname = os.path.join(odir, stream_name)
 
-        	
+            
         stream.write_pcap(pcap_fname, pkts_cnt)
         stream.write_flow(flow_fname, pkts_cnt)
         
         if not self.dbinfo is None:
-        	stream.write_couchdb(self.dbinfo, pkts_cnt)
+            stream.write_couchdb(self.dbinfo, pkts_cnt)
         
         #for i in stream.flows:
         #    self.streams[i].destroy(pkts_cnt)

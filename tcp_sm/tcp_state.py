@@ -64,7 +64,7 @@ flags_set = lambda pkt, flag: (pkt['TCP'].flags & flag) != 0
 class TCPStateMachine:
     def __init__(self, pkt=None):
         if not pkt is None:
-	        self.init(pkt)
+            self.init(pkt)
     
     def init(self, pkt):
         if not 'TCP' in pkt:
@@ -129,9 +129,9 @@ class TCPStateMachine:
     
     def client_prehandshake(self):
         return (self.client_state == "SYN_SENT") or (self.client_state == "SYN_RCVD")
-	
+    
     def server_prehandshake(self):
-	    return (self.server_state == "SYN_SENT") or (self.server_state == "SYN_RCVD") or (self.server_state == "LISTEN")
+        return (self.server_state == "SYN_SENT") or (self.server_state == "SYN_RCVD") or (self.server_state == "LISTEN")
     
     def is_fin_wait(self):
         return self.client_state.find("FIN_WAIT") > -1 or self.server_state.find("FIN_WAIT") > -1
@@ -192,7 +192,7 @@ class TCPStateMachine:
             self.client_state = "CLOSED"
         
         if self.server_state == "FIN_WAIT_1" and\
-        	self.client_state == "CLOSED" and\
+            self.client_state == "CLOSED" and\
             flags == self.build_flags("A"):
             self.server_state = "CLOSED"
             server_got_closed = True
@@ -265,7 +265,7 @@ class TCPStateMachine:
             server_got_closed = True
                 
         if self.client_state == "FIN_WAIT_1" and\
-        	self.server_state == "CLOSED" and\
+            self.server_state == "CLOSED" and\
             flags == self.build_flags("A"):
             self.client_state = "CLOSED"
             client_got_closed = True

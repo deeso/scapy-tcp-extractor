@@ -44,10 +44,10 @@ def store_stream_information(stream):
     
     stream_fields = {}
     for summary in stream_summary:
-		i = 0
-		while i < len(stream_keys):
-			stream_fields[stream_keys[i]] = summary[i]
-			i+=1
+        i = 0
+        while i < len(stream_keys):
+            stream_fields[stream_keys[i]] = summary[i]
+            i+=1
     
     doc = db[stream_name]
     for timestamp in stream_fields:
@@ -73,15 +73,15 @@ pkt = tcp_pkts[0]
 
 # able to create TCP States albeit they are wrong, I can still create them
 for pkt in tcp_pkts:
-	flow = (create_forward_flow(pkt), create_reverse_flow(pkt))
-	if not flow[0] in tcp_states and\
-		not flow[1] in tcp_states and is_syn_pkt(pkt):
-		#print ("yay!")
-		iiopoi = pkt
-		tcp_states[flow[0]] = TCPStateMachine(pkt)
-		tcp_states[flow[1]] = tcp_states[flow[0]] 
-	elif flow[0] in tcp_states:
-		iiopoi = tcp_states[flow[0]].next_state(pkt)
+    flow = (create_forward_flow(pkt), create_reverse_flow(pkt))
+    if not flow[0] in tcp_states and\
+        not flow[1] in tcp_states and is_syn_pkt(pkt):
+        #print ("yay!")
+        iiopoi = pkt
+        tcp_states[flow[0]] = TCPStateMachine(pkt)
+        tcp_states[flow[1]] = tcp_states[flow[0]] 
+    elif flow[0] in tcp_states:
+        iiopoi = tcp_states[flow[0]].next_state(pkt)
 
 
 states = []
@@ -99,15 +99,15 @@ i = 0
 # lets try doing some stuff with streams now    
 tcp_streams = {}
 for pkt in tcp_pkts:
-	flow = (create_forward_flow(pkt), create_reverse_flow(pkt))
-	if not flow[0] in tcp_streams and\
-		not flow[1] in tcp_streams and is_syn_pkt(pkt):
-		#print ("yay!")
-		#pkt
-		tcp_streams[flow[0]] = TCPStream(pkt)
-		tcp_streams[flow[1]] = tcp_streams[flow[0]] 
-	elif flow[0] in tcp_streams:
-		iiopoi = tcp_streams[flow[0]].add_pkt(pkt)
+    flow = (create_forward_flow(pkt), create_reverse_flow(pkt))
+    if not flow[0] in tcp_streams and\
+        not flow[1] in tcp_streams and is_syn_pkt(pkt):
+        #print ("yay!")
+        #pkt
+        tcp_streams[flow[0]] = TCPStream(pkt)
+        tcp_streams[flow[1]] = tcp_streams[flow[0]] 
+    elif flow[0] in tcp_streams:
+        iiopoi = tcp_streams[flow[0]].add_pkt(pkt)
 
 
 streams = []
@@ -143,22 +143,22 @@ for stream in streams:
         other_streams.append(stream)
 
 def print_streams_states(streams):
-	other_streams = streams
-	i = 0
-	while i < len(other_streams):
-		print((i, other_streams[i].tcp_state.get_states()))
-		i += 1
+    other_streams = streams
+    i = 0
+    while i < len(other_streams):
+        print((i, other_streams[i].tcp_state.get_states()))
+        i += 1
 
 
 def print_step_by_step_state(stream):
-	g = stream
-	test = [i for i in g.get_order_pkts()]
-	tcp_stream = TCPStream(test[0])
-	i = 1
-	while i < len(test):
-		tcp_stream.add_pkt(test[i])
-		print(tcp_stream.tcp_state.get_states())
-		i+=1
+    g = stream
+    test = [i for i in g.get_order_pkts()]
+    tcp_stream = TCPStream(test[0])
+    i = 1
+    while i < len(test):
+        tcp_stream.add_pkt(test[i])
+        print(tcp_stream.tcp_state.get_states())
+        i+=1
 
 print_streams_states(other_streams)
 
