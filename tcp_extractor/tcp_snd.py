@@ -111,7 +111,7 @@ class Snd:
             else:
                 is_valid = LOW <= ack < UPP + MAX
                 print (("LOW: %d < ack: %d < UPP: %d"%(LOW, ack,UPP+MAX)))
-    return is_valid
+        return is_valid
     
     def update_una(self, ack):
         '''

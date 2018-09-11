@@ -28,26 +28,22 @@ from random import randint
 from .tcp_snd import snd
 from .tcp_rcv import rcv
 
-
-
 MAX = 2 ** 32 - 1
 
 
-
-        
-
-
-
-
-
-
 class ReadTCPCapture(TCPState):
-    def __init__(self, pcap_file_name, filter_ports=[]):
+    def __init__(self, pcap_file_name, pkt_list=None, filter_ports=[]):
         fports = set(filter_ports)
-        pcap = scapy.rdpcap(pcap_file_name)
-        self.pkts = [pkt for pkt in pcap if TCP in pkt and\
-                     pkt[TCP].sports not in fports and\
-                     pkt[TCP].dport not in fports]
+
+        if pkt_list is None:
+            pkt_list = scapy.rdpcap(pcap_file_name)
+            
+        self.pkt_list = [pkt for pkt in pkt_list if TCP in pkt]
+        if len(fports) > 0:
+            self.pkt_list = [ pkt for pkt in self.pkt_list \
+                    if pkt[TCP].sports in fports and\
+                    pkt[TCP].dport in fports]
+
         self.streams = None
         self.sessions = {}
         self.states = {}

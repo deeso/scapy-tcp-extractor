@@ -300,36 +300,33 @@ class TCPStream:
         self.pcap_file.flush()
         
         
-    def write_couchdb(self, db, pkts_cnt=0):
-        stream_name = self.get_stream_name()
-        stream_keys = self.get_stream_keys()
-        stream_summary = self.get_app_stream_summary(pkts_cnt)
-        print(("processing stream name"+stream_name))
-        stream_fields = {}
-        for summary in stream_summary:
-            i = 0
-            summary_dict = {}
-            while i < len(stream_keys):
-                summary_dict[stream_keys[i]] = summary[i]
-                i+=1
-            stream_fields[summary_dict[stream_keys[0]]] = summary_dict
-        
-        try:
-            db[stream_name] = {}
-            db_strname = db[stream_name]
-        except:
-            print(("Streamname collision: ", stream_name))
-            print (stream_name)
-            raise
+    def organize_streams(self):
+        data = {}
+        seq_nos = {}
+        for pkt in self.get_order_pkts():
+            tcpp = pkt[TCP]
+            seq = tcpp.seq
+            sport = tcpp.sport
+            if not sport in data:
+                data[sport] = []
+                seq_nos[sport] = []
+            
+            if seq in seq_nos[sport]:
+                # retransmit
+                continue
 
-        for timestamp in stream_fields:
-            try:
-                db_strname[timestamp] = stream_fields[timestamp]
-                db.save(db_strname )
-            except:
-                print(("Time stamp collision: ", timestamp))
-                print (stream_fields)
-                raise
-        
-        
+            if Raw in tcpp:
+                data[sport].append([tcpp.seq, tcpp[Raw].load])
+                seq_nos[sport].append(seq)
+        return seq_nos, data
 
+    def get_stream_data(self):
+        seq_nos, data = self.organize_streams()
+        streams = {k:bytes() for k in data.keys()}
+
+        for sport, seqs_payloads in data.items():
+            stream = b''
+            for seq, payload in seqs_payloads:
+                stream = stream + payload
+            streams[sport] = stream
+        return streams

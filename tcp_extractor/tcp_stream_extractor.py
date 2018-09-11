@@ -26,7 +26,7 @@ Description: tracks extracted streams [TCPStream] and removes the streams if the
 """
 
 
-import scapy, threading, couchdb
+import scapy, threading
 import gc
 from threading import *
 from random import randint
@@ -80,20 +80,12 @@ class TCPStreamExtractor:
         self.DEL_LOCK = threading.Lock()
         self.cleanup = True
         self.timer = 4.0
-        self.dbinfo = None
-        if not dbname is None:
-            dbServer = couchdb.Server()
-            try:
-                self.dbinfo = dbServer.create(dbname)
-            except:
-                pass
-            try:
-                self.dbinfo = dbServer[dbname]
-            except:
-                self.dbinfo = None
+        self.data_streams = {}
                 
         
     def __next__(self):
+        if self.pkt_num >= len(self.packet_list):
+            return None  
         pkt = self.packet_list[self.pkt_num]
         self.pkt_num += 1
         self.timestamp = int(pkt.time)
@@ -106,17 +98,24 @@ class TCPStreamExtractor:
             self.streams [flow[0]] = TCPStream(pkt)
             self.streams [flow[1]] = self.streams [flow[0]] 
         elif flow[0] in self.streams:
-            self.streams[flow[0]].add_pkt(pkt)
-        
+            self.streams[flow[0]].add_pkt(pkt)        
         return pkt
+
+    def process_packets(self):
+        while self.pkt_num < len(self.packet_list):
+            next(self)
+
+        # create data streams
+        for session, tcp_stream in self.streams.items():
+            self.data_streams[session] = tcp_stream.get_stream_data()
+        return self.pkt_num
 
     def run(self):
         global CLEANUP_THREAD
         try:
             CLEANUP_THREAD = threading.Timer(self.timer, thread_maintanence, args=(self.timer, self ))
             CLEANUP_THREAD.start() # Duh! me needs to start or nom nom nom memories!
-            while True:
-                next(self)
+            self.process_packets()
         except KeyboardInterrupt:
             self.cleanup = False
             CLEANUP_THREAD.cancel()
@@ -145,15 +144,15 @@ class TCPStreamExtractor:
             pkt_cnt = self.streams[key].len_pkts()
             l_ts = int(self.streams[key].time)
             if (timestamp - l_ts) > timeout:
-        print(("Timeout occurred: %s - %s => %s, Writing stream: %s"%(str(timestamp),str(l_ts), str(timestamp-l_ts), key)))
+                print(("Timeout occurred: %s - %s => %s, Writing stream: %s"%(str(timestamp),str(l_ts), str(timestamp-l_ts), key)))
                 purged_streams.add(key)
-        self.write_stream(key)
+                self.write_stream(key)
                 self.remove_stream(key)
-        print(("%s purged from current streams"%key))
+                print(("%s purged from current streams"%key))
         
             elif pkt_cnt > 10000:
                 print(("Writing %d of %d packets from stream: %s"%(pkt_cnt,self.streams[key].len_pkts(), self.streams[key].get_stream_name()))) 
-        self.write_stream(key, pkt_cnt)
+                self.write_stream(key, pkt_cnt)
                 self.streams[key].destroy(pkt_cnt)
                 print(("***Wrote %d packets for stream: %s"%(pkt_cnt,self.streams[key].get_stream_name()))) 
         print(("Purged %d streams of %d from evaluated streams\n\n"%(len(purged_streams), len(keys)/2))) 
@@ -191,13 +190,7 @@ class TCPStreamExtractor:
             
         stream.write_pcap(pcap_fname, pkts_cnt)
         stream.write_flow(flow_fname, pkts_cnt)
-        
-        if not self.dbinfo is None:
-            stream.write_couchdb(self.dbinfo, pkts_cnt)
-        
-        #for i in stream.flows:
-        #    self.streams[i].destroy(pkts_cnt)
-        
+                
         self.DEL_LOCK.release()
 
         
