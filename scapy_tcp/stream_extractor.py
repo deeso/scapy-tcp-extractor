@@ -55,7 +55,8 @@ def thread_maintanence(timer_val, stream_extractor, timeout=1000):
 
 
 class TCPStreamExtractor:
-    def __init__(self, filename, packet_list=None, outputdir=None, dbname=None,pcap_filters=None):
+    def __init__(self, filename, packet_list=None, process_packets=True, 
+                 outputdir=None, pcap_filters=None):
         self.filename = filename
         
         self.pcap_filter = pcap_filters
@@ -81,6 +82,9 @@ class TCPStreamExtractor:
         self.cleanup = True
         self.timer = 4.0
         self.data_streams = {}
+
+        if process_packets:
+            self.process_packets()
                 
         
     def __next__(self):
@@ -108,7 +112,7 @@ class TCPStreamExtractor:
         # create data streams
         for session, tcp_stream in self.streams.items():
             self.data_streams[session] = tcp_stream.get_stream_data()
-        return self.pkt_num
+        return self.pkt_num, self.data_streams
 
     def run(self):
         global CLEANUP_THREAD
@@ -157,8 +161,9 @@ class TCPStreamExtractor:
                 print(("***Wrote %d packets for stream: %s"%(pkt_cnt,self.streams[key].get_stream_name()))) 
         print(("Purged %d streams of %d from evaluated streams\n\n"%(len(purged_streams), len(keys)/2))) 
 
-            
-            
+    def get_streams(self):
+        return self.data_streams
+
     def remove_stream(self, key):
         # dont call in cleanup stream, it will deadlock
         if not key in self.streams:
@@ -186,7 +191,6 @@ class TCPStreamExtractor:
             pcap_fname = os.path.join(odir, stream_name)
             odir = os.path.join(self.outputdir, "flows")
             flow_fname = os.path.join(odir, stream_name)
-
             
         stream.write_pcap(pcap_fname, pkts_cnt)
         stream.write_flow(flow_fname, pkts_cnt)

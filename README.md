@@ -1,3 +1,32 @@
+
+## Summary
+
+This code implements TCP stream reassembly using _scapy_ packets.  It
+implements a TCP state machine, and then groups related packets.  After
+grouping streams, the data in the streams is concatenated.
+
+This code is old, and I am not entirely sure it's not implemented else where.
+
+## Usage
+
+To use it from IPython, I perform the following:
+
+```
+filename = "../../infected-traffic.pcap"
+from scapy_tcp.stream_extractor import TCPStreamExtractor
+from analyst_environment.pcaps import *
+from analyst_environment.environment_setup import *
+tse = TCPStreamExtractor(filename)
+
+# stream keys 'SRC:SPORT ==> DST:DPORT' 
+#        ===> {SPORT:bytes(CLIENT_STREAM), DPORT:bytes(SERVER_STREAM)}
+
+data_streams = tse.get_streams()
+```
+
+
+## Background 
+
 This is research quality code, included in this package is code 
 perform TCP Stream extraction, and there is some proposed starts
 on how to perform the auto-matic send and receive on TCP sessions.
@@ -34,17 +63,6 @@ independently.  Alternatively, the user can control the class with the
 TCPStreamExtractor.next call, rather than running unsupervised.  
 
 The only required software for this code is Scapy.  
-
-To use it from IPython, I perform the following:
-
-> ipython
-[1]: import tcp_sm.tcp_stream_extractor
-[2]: dbname = "streams"
-[3]: filename = "file.pcap"
-[4]: output_dir = "output" # creates output/flows and output/pcaps
-[6]: t = tcp_stream_extractor.TCPStreamExtractor(filename, outputdir=output_dir, dbname=dbname)
-[7]: t.run()
-
 
 
 Some future work for this code is to create TCP Stream reassembly using 
