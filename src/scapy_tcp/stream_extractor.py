@@ -96,11 +96,16 @@ class TCPStreamExtractor:
         if not 'TCP' in pkt:
             return pkt
         
+        fwd_flows = set()
+        rev_flows = set()
+
         flow = (create_forward_flow(pkt), create_reverse_flow(pkt))
         if not flow[0] in self.streams and\
             not flow[1] in self.streams and is_syn_pkt(pkt):
             self.streams [flow[0]] = TCPStream(pkt)
-            self.streams [flow[1]] = self.streams [flow[0]] 
+            self.streams [flow[1]] = self.streams [flow[0]]
+            fwd_flows.add(flow[0])
+            rev_flows.add(flow[1])
         elif flow[0] in self.streams:
             self.streams[flow[0]].add_pkt(pkt)        
         return pkt
@@ -110,7 +115,8 @@ class TCPStreamExtractor:
             next(self)
 
         # create data streams
-        for session, tcp_stream in self.streams.items():
+        for session in self.fwd_flows:
+            tcp_stream = self.streams[session]
             self.data_streams[session] = tcp_stream.get_stream_data()
         return self.pkt_num, self.data_streams
 
@@ -196,5 +202,3 @@ class TCPStreamExtractor:
         stream.write_flow(flow_fname, pkts_cnt)
                 
         self.DEL_LOCK.release()
-
-        
