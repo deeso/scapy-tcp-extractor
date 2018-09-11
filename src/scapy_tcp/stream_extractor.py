@@ -82,7 +82,10 @@ class TCPStreamExtractor:
         self.cleanup = True
         self.timer = 4.0
         self.data_streams = {}
+        self.fwd_flows = set()
+        self.rev_flows = set()
 
+        
         if process_packets:
             self.process_packets()
                 
@@ -104,8 +107,8 @@ class TCPStreamExtractor:
             not flow[1] in self.streams and is_syn_pkt(pkt):
             self.streams [flow[0]] = TCPStream(pkt)
             self.streams [flow[1]] = self.streams [flow[0]]
-            fwd_flows.add(flow[0])
-            rev_flows.add(flow[1])
+            self.fwd_flows.add(flow[0])
+            self.rev_flows.add(flow[1])
         elif flow[0] in self.streams:
             self.streams[flow[0]].add_pkt(pkt)        
         return pkt
