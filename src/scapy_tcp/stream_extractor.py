@@ -123,6 +123,19 @@ class TCPStreamExtractor:
             self.data_streams[session] = tcp_stream.get_stream_data()
         return self.pkt_num, self.data_streams
 
+    def summary(self):
+        flows = sorted(list(self.fwd_flows))
+        fmt = "{} (c) {}  (s) {}"
+        c = lambda f: int(f.split(':')[1].split()[0])
+        s = lambda f: int(f.split(':')[-1])
+        results = []
+        for sess in flows:                                                                   
+            http = self.streams[sess]
+            f = fmt.format(sess, len(http[c(sess)]) len(http[s(sess)]) )
+            results.append(f)
+        print ('\n'.join(results))
+        return results
+
     def run(self):
         global CLEANUP_THREAD
         try:
