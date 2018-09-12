@@ -131,8 +131,8 @@ class TCPStreamExtractor:
         results = []
         for sess in flows:                                                                   
             http = self.data_streams[sess]
-            c_str_sz = len(http[c_len(sess)])
-            s_str_sz = len(http[s_len(sess)])
+            c_str_sz = len(http[c_port(sess)])
+            s_str_sz = len(http[s_port(sess)])
             f = fmt.format(sess, c_str_sz, s_str_sz)
             results.append(f)
         print ('\n'.join(results))
