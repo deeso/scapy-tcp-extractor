@@ -126,12 +126,14 @@ class TCPStreamExtractor:
     def summary(self):
         flows = sorted(list(self.fwd_flows))
         fmt = "{} (c) {}  (s) {}"
-        c = lambda f: int(f.split(':')[1].split()[0])
-        s = lambda f: int(f.split(':')[-1])
+        c_len = lambda f: int(f.split(':')[1].split()[0])
+        s_len = lambda f: int(f.split(':')[-1])
         results = []
         for sess in flows:                                                                   
             http = self.streams[sess]
-            f = fmt.format(sess, len(http[c(sess)]) len(http[s(sess)]) )
+            c_str_sz = len(http[c_len(sess)])
+            s_str_sz = len(http[s_len(sess)])
+            f = fmt.format(sess, c_str_sz, s_str_sz)
             results.append(f)
         print ('\n'.join(results))
         return results
