@@ -149,7 +149,7 @@ class TCPStreamExtractor:
             server = http[s_port(sess)]
             results.append({'client': client, 'server': server})
         # print ('\n'.join(results))
-        if len(key) == 1:
+        if len(keys) == 1:
             return results[0]
         return results
 
