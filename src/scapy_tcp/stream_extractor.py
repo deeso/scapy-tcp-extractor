@@ -135,7 +135,7 @@ class TCPStreamExtractor:
             s_str_sz = len(http[s_port(sess)])
             f = fmt.format(sess, c_str_sz, s_str_sz)
             results.append(f)
-        print ('\n'.join(results))
+        # print ('\n'.join(results))
         return results
 
     def run(self):
