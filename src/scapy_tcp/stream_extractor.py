@@ -142,15 +142,15 @@ class TCPStreamExtractor:
         keys = sorted(list(self.fwd_flows)) if key is None else [key]
         c_port = lambda f: int(f.split(':')[1].split()[0])
         s_port = lambda f: int(f.split(':')[-1])
-        results = []
+        results = {}
         for sess in keys:                                                                   
             http = self.data_streams[sess]
             client = http[c_port(sess)]
             server = http[s_port(sess)]
-            results.append({'client': client, 'server': server})
+            results[sess] = {'client': client, 'server': server}
         # print ('\n'.join(results))
         if len(keys) == 1:
-            return results[0]
+            return list(results.values())[0]
         return results
 
     def run(self):
