@@ -47,7 +47,7 @@ class TCPStream:
         self.dst = pkt["IP"].dst
         self.sport = pkt["TCP"].sport
         self.dport = pkt["TCP"].dport        
-        self.time = pkt.time        
+        self.time = float(pkt.time)
         self.tcp_state = TCPStateMachine(pkt)
         self.flows = self.tcp_state.flows
         self.pkts = {self.time:pkt}
@@ -87,7 +87,7 @@ class TCPStream:
     
     def add_pkt(self, pkt):
         is_closed = self.tcp_state.next_state(pkt)
-        self.pkts[pkt.time] = pkt
+        self.pkts[float(pkt.time)] = pkt
         self.last_time = pkt.time
         return is_closed
         
