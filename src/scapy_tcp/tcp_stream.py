@@ -47,7 +47,7 @@ class TCPStream:
         self.dst = pkt["IP"].dst
         self.sport = pkt["TCP"].sport
         self.dport = pkt["TCP"].dport        
-        self.time = pkt.time        
+        self.time = float(pkt.time)
         self.tcp_state = TCPStateMachine(pkt)
         self.flows = self.tcp_state.flows
         self.pkts = {float(self.time): pkt}
