@@ -14,8 +14,6 @@ To use it from IPython, I perform the following:
 ```
 filename = "../../infected-traffic.pcap"
 from scapy_tcp.stream_extractor import TCPStreamExtractor
-from analyst_environment.pcaps import *
-from analyst_environment.environment_setup import *
 tse = TCPStreamExtractor(filename)
 
 # stream keys 'SRC:SPORT ==> DST:DPORT' 
