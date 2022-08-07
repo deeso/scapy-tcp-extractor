@@ -56,10 +56,10 @@ def thread_maintanence(timer_val, stream_extractor, timeout=1000):
 
 class TCPStreamExtractor:
     def __init__(self, filename, packet_list=None, process_packets=True, 
-                 outputdir=None, pcap_filters=None):
+                 outputdir=None, bpf_filter=None):
         self.filename = filename
         
-        self.pcap_filter = pcap_filters
+        self.bpf_filter = bpf_filter
         self.outputdir=outputdir
         
         if not self.outputdir is None:
@@ -72,7 +72,7 @@ class TCPStreamExtractor:
         
         self.packet_list = packet_list
         if packet_list is None:
-            self.packet_list =scapy.utils.rdpcap(filename) 
+            self.packet_list = scapy.all.sniff(offline=filename, filter=bpf_filter)
         
         self.pkt_num = 0
         # a stream is mapped under two flow keys
