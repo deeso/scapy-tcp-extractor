@@ -43,8 +43,12 @@ FLOW_NAME = "T:%s_C:%s:%s_S:%s:%s"
 
 class TCPStream:
     def __init__(self, pkt ):
-        self.src = pkt["IP"].src 
-        self.dst = pkt["IP"].dst
+        if "IP" in pkt:
+            self.src = pkt["IP"].src
+            self.dst = pkt["IP"].dst
+        else:
+            self.src = pkt["IPv6"].src
+            self.dst = pkt["IPv6"].dst
         self.sport = pkt["TCP"].sport
         self.dport = pkt["TCP"].dport        
         self.time = float(pkt.time)
@@ -92,16 +96,28 @@ class TCPStream:
         return is_closed
         
     def create_client_directed_flow(self):
-        return "%s:%s ==> %s:%s"%(self.src,str(self.sport),self.dst,str(self.dport))
+        if ':' in self.src:
+            return "[%s]:%s ==> [%s]:%s"%(self.src,str(self.sport),self.dst,str(self.dport))
+        else:
+            return "%s:%s ==> %s:%s"%(self.src,str(self.sport),self.dst,str(self.dport))
     
     def create_server_directed_flow(self):
-        return "%s:%s ==> %s:%s"%(self.dst,str(self.dport),self.src,str(self.sport),)
+        if ':' in self.dst:
+            return "[%s]:%s ==> [%s]:%s"%(self.dst,str(self.dport),self.src,str(self.sport),)
+        else:
+            return "%s:%s ==> %s:%s"%(self.dst,str(self.dport),self.src,str(self.sport),)
 
     def get_client_server_str(self):
-        return "%s:%s ==> %s:%s"%(self.src,str(self.sport),self.dst,str(self.dport))
+        if ':' in self.src:
+            return "[%s]:%s ==> [%s]:%s"%(self.src,str(self.sport),self.dst,str(self.dport))
+        else:
+            return "%s:%s ==> %s:%s"%(self.src,str(self.sport),self.dst,str(self.dport))
 
     def get_server_client_str(self):
-        return "%s:%s <== %s:%s"%(self.dst,str(self.dport),self.src,str(self.sport))
+        if ':' in self.dst:
+            return "[%s]:%s <== [%s]:%s"%(self.dst,str(self.dport),self.src,str(self.sport))
+        else:
+            return "%s:%s <== %s:%s"%(self.dst,str(self.dport),self.src,str(self.sport))
 
     def get_client_server(self):
         return 0
@@ -147,7 +163,7 @@ class TCPStream:
             flow_total += payload_len
             time_elapsed, time_last_pkt = self.packet_time_spacing_idx(pkts, i)
             
-            if self.src == pkt['IP'].src:
+            if self.src == pkt['IP' if 'IP' in pkt else 'IPv6'].src:
                 #flow_info = self.get_server_client_str()
                 flow_info = self.get_client_server()
                 if not last_client_pkt is None:
@@ -195,7 +211,7 @@ class TCPStream:
             flow_total += payload_len
             time_elapsed, time_last_pkt = self.packet_time_spacing_idx(pkts, i)
             
-            if self.src == pkt['IP'].src:
+            if self.src == pkt['IP' if 'IP' in pkt else 'IPv6'].src:
                 flow_info = self.get_server_client_str()
                 if not last_client_pkt is None:
                     last_client_pkt_time = self.packet_time_spacing_pkt(pkt, last_client_pkt)
@@ -239,22 +255,22 @@ class TCPStream:
         while i < len(pkts):
             pkt = pkts[i]
             flow_info = ''
-            payload_len = len(pkt['IP'])
+            payload_len = len(pkt['IP' if 'IP' in pkt else 'IPv6'])
             flow_total += payload_len
             time_elapsed, time_last_pkt = self.packet_time_spacing_idx(pkts, i)
             
-            if self.src == pkt['IP'].src:
+            if self.src == pkt['IP' if 'IP' in pkt else 'IPv6'].src:
                 flow_info = self.get_server_client_str()
                 if not last_client_pkt is None:
                     last_client_pkt_time = self.packet_time_spacing_pkt(pkt, last_client_pkt)
                 last_client_pkt = pkt
-                client_total += len(pkt['IP'])
+                client_total += len(pkt['IP' if 'IP' in pkt else 'IPv6'])
             else:
                 flow_info = self.get_client_server_str()
                 if not last_server_pkt is None:
                     last_server_pkt_time = self.packet_time_spacing_pkt(pkt,last_server_pkt)
                 last_server_pkt = pkt
-                server_total += len(pkt['IP'])
+                server_total += len(pkt['IP' if 'IP' in pkt else 'IPv6'])
 
 
             pkt_summary.append([ str(pkt.time), 

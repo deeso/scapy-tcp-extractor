@@ -31,11 +31,14 @@ from .tcp_rcv import Rcv
 is_syn_pkt = lambda pkt: 'TCP' in pkt and pkt['TCP'].flags == TCP_FLAGS['S']
 is_synack_pkt = lambda pkt: 'TCP' in pkt and pkt['TCP'].flags == (TCP_FLAGS['S'] | TCP_FLAGS['A'])
 
-create_pkt_flow = lambda pkt: "%s:%s ==> %s:%s"%(pkt['IP'].src,str(pkt['IP'].sport),pkt['IP'].dst,str(pkt['IP'].dport))
+create_pkt_flow = lambda pkt: "%s:%s ==> %s:%s"%(pkt['IP'].src,str(pkt['IP'].sport),pkt['IP'].dst,str(pkt['IP'].dport)) \
+          if 'IP' in pkt else "[%s]:%s ==> [%s]:%s"%(pkt['IPv6'].src,str(pkt['IPv6'].sport),pkt['IPv6'].dst,str(pkt['IPv6'].dport))
 
-create_forward_flow = lambda pkt: "%s:%s ==> %s:%s"%(pkt['IP'].src,str(pkt['IP'].sport),pkt['IP'].dst,str(pkt['IP'].dport))
+create_forward_flow = lambda pkt: "%s:%s ==> %s:%s"%(pkt['IP'].src,str(pkt['IP'].sport),pkt['IP'].dst,str(pkt['IP'].dport)) \
+              if 'IP' in pkt else "[%s]:%s ==> [%s]:%s"%(pkt['IPv6'].src,str(pkt['IPv6'].sport),pkt['IPv6'].dst,str(pkt['IPv6'].dport))
 
-create_reverse_flow = lambda pkt: "%s:%s ==> %s:%s"%(pkt['IP'].dst,str(pkt['IP'].dport),pkt['IP'].src,str(pkt['IP'].sport))
+create_reverse_flow = lambda pkt: "%s:%s ==> %s:%s"%(pkt['IP'].dst,str(pkt['IP'].dport),pkt['IP'].src,str(pkt['IP'].sport)) \
+              if 'IP' in pkt else "[%s]:%s ==> [%s]:%s"%(pkt['IPv6'].dst,str(pkt['IPv6'].dport),pkt['IPv6'].src,str(pkt['IPv6'].sport))
 
 
 create_flow = create_forward_flow
@@ -73,9 +76,13 @@ class TCPStateMachine:
             raise Exception("Not valid SYN")
             
         self.flows = set((create_forward_flow(pkt), create_reverse_flow(pkt)))
-        self.server = pkt['IP'].dst
-        self.client = pkt['IP'].src
-        
+        if 'IP' in pkt:
+                self.server = pkt['IP'].dst
+                self.client = pkt['IP'].src
+        else:
+                self.server = pkt['IPv6'].dst
+                self.client = pkt['IPv6'].src
+
         # 0 is now, 1 is the future Flags
         self.server_state = "LISTEN"
         self.client_state = "SYN_SENT"
@@ -95,7 +102,7 @@ class TCPStateMachine:
         if flow not in self.flows:
             raise Exception("Not a valid packet for this model")
         
-        if pkt['IP'].dst == self.server:
+        if pkt['IP' if 'IP' in pkt else 'IPv6'].dst == self.server:
             v =  self.handle_client_pkt(pkt)
             if self.is_fin_wait():
                self.fin_wait_time = pkt.time
@@ -357,7 +364,10 @@ class TCPState:
         self.sport = sport
         self.dport = dport
         self.dst = dst
-        return IP(dst=dst) / TCP(dport=dport, sport=sport)
+        if ':' in dst:
+                return IPv6(dst=dst) / TCP(dport=dport, sport=sport)
+        else:
+                return IP(dst=dst) / TCP(dport=dport, sport=sport)
         
     def get_rbase_tcp(self, rseg):
         '''
@@ -381,7 +391,10 @@ class TCPState:
         dst = rpkt.src
         src = rpkt.dst
         options = rpkt.options
-        return IP(src=src, dst=dst, options=options)
+        if ':' in src:
+                return IPv6(src=src, dst=dst, options=options)
+        else:
+                return IP(src=src, dst=dst, options=options)
     
     def get_rbase_pkt(self, rpkt):
         '''
@@ -390,7 +403,10 @@ class TCPState:
         :param rpkt: rcvd segment to base a new packet off of 
         :type rpkt:  scapy.IP/scapy.TCP
         '''
-        return IP(dst=rpkt[IP].src) / TCP(dport=rpkt[TCP].sport, sport=rpkt[TCP].dport)
+        if IP in rpkt:
+                return IP(dst=rpkt[IP].src) / TCP(dport=rpkt[TCP].sport, sport=rpkt[TCP].dport)
+        else:
+                return IPv6(dst=rpkt[IPv6].src) / TCP(dport=rpkt[TCP].sport, sport=rpkt[TCP].dport)
 
     def get_base_tcp(self):
         '''
@@ -406,13 +422,19 @@ class TCPState:
         Creates a base IP packet based on internal TCP/IP stuffs.
         '''        
         dst = self.dst
-        return IP(dst=dst)
+        if ':' in dst:
+                return IPv6(dst=dst)
+        else:
+                return IP(dst=dst)
     
     def get_base_pkt(self):
         '''
         Creates a base packet based on a rcvd packet.
         '''
-        return IP(dst=self.dst) / TCP(dport=self.dport,sport=self.sport)
+        if ':' in self.dst:
+                return IPv6(dst=self.dst) / TCP(dport=self.dport,sport=self.sport)
+        else:
+                return IP(dst=self.dst) / TCP(dport=self.dport,sport=self.sport)
 
         
     def update_seg_state(self, seg, payload=None):
